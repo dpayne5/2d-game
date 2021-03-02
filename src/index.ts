@@ -1,4 +1,4 @@
-import { Engine, Actor, Color, CollisionType, Input } from "excalibur";
+import { Engine, Actor, Color, CollisionType, Input, Vector } from "excalibur";
 import * as ex from "excalibur";
 
 const game = new Engine({
@@ -7,6 +7,8 @@ const game = new Engine({
 });
 // todo build awesome game here
 const ground: number = game.drawHeight - 50;
+const leftKnifeSpeed = 250;
+const rightKnifeSpeed = 10;
 console.log(game.drawHeight);
 
 class Wall extends Actor {
@@ -62,8 +64,6 @@ class Paddle extends Actor {
     this.body.collider.type = ex.CollisionType.Active;
   }
 
-  private jump() {}
-
   public update(engine, delta) {
     if (engine.input.keyboard.wasPressed(ex.Input.Keys.Space)) {
       if (this.pos.y == 517.5) {
@@ -72,8 +72,14 @@ class Paddle extends Actor {
       }
     }
     if (engine.input.keyboard.isHeld(ex.Input.Keys.D)) {
+      if (this.vel.x < 0) {
+        this.vel.x += 5;
+      }
       this.vel.x += 5;
     } else if (engine.input.keyboard.isHeld(ex.Input.Keys.A)) {
+      if (this.vel.x > 0) {
+        this.vel.x -= 5;
+      }
       this.vel.x -= 5;
     }
     //handle decelarate
@@ -87,6 +93,32 @@ class Paddle extends Actor {
   }
 }
 
+function knifeVelocity(playerPos: Vector, mousePos: Vector): Vector {
+  console.log(playerPos, mousePos);
+
+  let xVelo = mousePos.x - playerPos.x;
+  let yVelo = mousePos.y - playerPos.y;
+  let newVec = new ex.Vector(xVelo, yVelo).normalize();
+
+  return newVec;
+}
+
+class Knife extends Actor {
+  constructor(playerPos: Vector, mousePos: Vector) {
+    let knifeVelo = knifeVelocity(playerPos, mousePos);
+    console.log(knifeVelo);
+    super({
+      pos: new ex.Vector(playerPos.x, playerPos.y - 10),
+      width: 8,
+      height: 20,
+      color: Color.White,
+    });
+    this.vel.x = knifeVelo.x * leftKnifeSpeed;
+    this.vel.y = knifeVelo.y * leftKnifeSpeed;
+    this.body.collider.type = CollisionType.Passive;
+  }
+}
+
 const floor = new Floor();
 floor.color = Color.White;
 game.add(floor);
@@ -97,6 +129,17 @@ paddle.color = Color.LightGray;
 paddle.body.collider.type = CollisionType.Active;
 game.add(paddle);
 
+game.input.pointers.primary.on("down", function (evt) {
+  // evt.stopPropagation();
+
+  if (evt.button == "Left") {
+    let knife = new Knife(paddle.pos, evt.pos);
+    game.add(knife);
+  } else {
+    console.log("R");
+  }
+});
+
 // Start the engine to begin the game.
 game.start();
-console.log(paddle);
+console.log(game);
