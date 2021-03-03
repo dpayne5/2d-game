@@ -1,4 +1,12 @@
-import { Engine, Actor, Color, CollisionType, Input, Vector } from "excalibur";
+import {
+  Engine,
+  Actor,
+  Color,
+  CollisionType,
+  Input,
+  Vector,
+  CollisionStartEvent,
+} from "excalibur";
 import * as ex from "excalibur";
 
 const game = new Engine({
@@ -93,8 +101,6 @@ class Paddle extends Actor {
 }
 
 function knifeVelocity(playerPos: Vector, mousePos: Vector): Vector {
-  console.log(playerPos, mousePos);
-
   let xVelo = mousePos.x - playerPos.x;
   let yVelo = mousePos.y - playerPos.y;
   let newVec = new ex.Vector(xVelo, yVelo).normalize();
@@ -105,7 +111,6 @@ function knifeVelocity(playerPos: Vector, mousePos: Vector): Vector {
 class Knife extends Actor {
   constructor(playerPos: Vector, mousePos: Vector) {
     let knifeVelo = knifeVelocity(playerPos, mousePos);
-    console.log(knifeVelo);
     super({
       pos: new ex.Vector(playerPos.x, playerPos.y - 21),
       width: 8,
@@ -117,17 +122,27 @@ class Knife extends Actor {
     this.body.collider.type = CollisionType.Passive;
   }
 
+  onInitialize(engine: ex.Engine) {
+    this.on("collisionstart", this.onCollision);
+  }
+
+  onCollision(evt: CollisionStartEvent) {
+    if (evt.other instanceof Knife) {
+      console.log("knife collide");
+    }
+  }
+
   public update(engine, delta) {
-    if (this.pos.x < 20 || this.pos.y < 20 || this.pos.y > 380) {
+    if (
+      this.pos.x < 20 ||
+      this.pos.y < 20 ||
+      this.pos.y > 380 ||
+      this.pos.x > 780
+    ) {
       this.body.collider.type = CollisionType.Passive;
     } else {
       this.body.collider.type = CollisionType.Active;
     }
-    // if (this.pos.x < 5 || this.pos.x > game.drawWidth - 5 || this.pos.y < 10) {
-    //   this.body.collider.type = CollisionType.Passive;
-    // } else {
-    //   this.body.collider.type = CollisionType.Active;
-    // }
 
     super.update(engine, delta);
   }
