@@ -6,6 +6,7 @@ import {
   Input,
   Vector,
   CollisionStartEvent,
+  PreCollisionEvent,
 } from "excalibur";
 import * as ex from "excalibur";
 
@@ -109,6 +110,8 @@ function knifeVelocity(playerPos: Vector, mousePos: Vector): Vector {
 }
 
 class Knife extends Actor {
+  preCollisonVeloX: number;
+  hasCollided: boolean;
   constructor(playerPos: Vector, mousePos: Vector) {
     let knifeVelo = knifeVelocity(playerPos, mousePos);
     super({
@@ -117,18 +120,27 @@ class Knife extends Actor {
       height: 20,
       color: Color.White,
     });
+
     this.vel.x = knifeVelo.x * leftKnifeSpeed;
     this.vel.y = knifeVelo.y * leftKnifeSpeed;
     this.body.collider.type = CollisionType.Passive;
+    this.preCollisonVeloX = 0;
+    this.hasCollided = false;
   }
 
   onInitialize(engine: ex.Engine) {
-    this.on("collisionstart", this.onCollision);
+    this.on("precollision", this.onCollision);
   }
 
-  onCollision(evt: CollisionStartEvent) {
+  onCollision(evt: PreCollisionEvent) {
     if (evt.other instanceof Knife) {
+      console.log(this.vel);
+      if (this.hasCollided == false) {
+        this.hasCollided = true;
+        this.preCollisonVeloX = this.vel.x * -1;
+      }
       console.log("knife collide");
+      console.log(this.vel);
     }
   }
 
@@ -143,6 +155,9 @@ class Knife extends Actor {
     } else {
       this.body.collider.type = CollisionType.Active;
     }
+
+    this.vel.x =
+      this.preCollisonVeloX == 0 ? this.vel.x : this.preCollisonVeloX;
 
     super.update(engine, delta);
   }
@@ -159,8 +174,6 @@ paddle.body.collider.type = CollisionType.Active;
 game.add(paddle);
 
 game.input.pointers.primary.on("down", function (evt) {
-  // evt.stopPropagation();
-
   if (evt.button == "Left") {
     let knife = new Knife(paddle.pos, evt.pos);
     game.add(knife);
