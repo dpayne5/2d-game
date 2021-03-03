@@ -7,9 +7,8 @@ const game = new Engine({
 });
 // todo build awesome game here
 const ground: number = game.drawHeight - 50;
-const leftKnifeSpeed = 250;
+const leftKnifeSpeed = 200;
 const rightKnifeSpeed = 10;
-console.log(game.drawHeight);
 
 class Wall extends Actor {
   constructor(xPosition) {
@@ -108,7 +107,7 @@ class Knife extends Actor {
     let knifeVelo = knifeVelocity(playerPos, mousePos);
     console.log(knifeVelo);
     super({
-      pos: new ex.Vector(playerPos.x, playerPos.y - 10),
+      pos: new ex.Vector(playerPos.x, playerPos.y - 21),
       width: 8,
       height: 20,
       color: Color.White,
@@ -116,6 +115,21 @@ class Knife extends Actor {
     this.vel.x = knifeVelo.x * leftKnifeSpeed;
     this.vel.y = knifeVelo.y * leftKnifeSpeed;
     this.body.collider.type = CollisionType.Passive;
+  }
+
+  public update(engine, delta) {
+    if (this.pos.x < 20 || this.pos.y < 20 || this.pos.y > 380) {
+      this.body.collider.type = CollisionType.Passive;
+    } else {
+      this.body.collider.type = CollisionType.Active;
+    }
+    // if (this.pos.x < 5 || this.pos.x > game.drawWidth - 5 || this.pos.y < 10) {
+    //   this.body.collider.type = CollisionType.Passive;
+    // } else {
+    //   this.body.collider.type = CollisionType.Active;
+    // }
+
+    super.update(engine, delta);
   }
 }
 
@@ -142,4 +156,3 @@ game.input.pointers.primary.on("down", function (evt) {
 
 // Start the engine to begin the game.
 game.start();
-console.log(game);
