@@ -13,11 +13,47 @@ import * as ex from "excalibur";
 const game = new Engine({
   width: 800,
   height: 600,
+  backgroundColor: Color.fromRGB(7, 118, 148),
 });
-// todo build awesome game here
+
+document.oncontextmenu = () => {
+  return false;
+};
 const ground: number = game.drawHeight - 50;
 const leftKnifeSpeed = 200;
-const rightKnifeSpeed = 10;
+const rightKnifeSpeed = 125;
+
+class Box extends Actor {
+  constructor(x: number, y: number, type: string) {
+    super({
+      pos: new ex.Vector(x, y),
+      width: 60,
+      height: 60,
+      color: Color.fromRGB(186, 159, 112),
+    });
+    this.body.collider.type = CollisionType.Passive;
+  }
+
+  onInitialize(engine: ex.Engine) {
+    this.on("precollision", this.onCollision);
+  }
+
+  //need to adjust velocity after collision, both should move at the maximum speed of the two.
+  onCollision(evt: PreCollisionEvent) {
+    if (evt.other instanceof Knife) {
+      console.log(this.vel);
+
+      console.log("box reading knife collision");
+      console.log(this.vel);
+      this.color = Color.fromRGB(51, 186, 6);
+    }
+  }
+}
+
+let bBox = new Box(100, 100, "regular");
+let cBox = new Box(700, 100, "regular");
+game.add(cBox);
+game.add(bBox);
 
 class Wall extends Actor {
   constructor(xPosition) {
@@ -89,11 +125,7 @@ class Paddle extends Actor {
         this.vel.x -= 5;
       }
       this.vel.x -= 5;
-    }
-    //handle decelarate
-    else {
-      //some default option
-      let a: number = 1;
+    } else {
       this.vel.x = Math.abs(this.vel.x) < 1 ? 0 : this.vel.x * 0.9;
     }
     this.vel.y += 10;
@@ -112,17 +144,26 @@ function knifeVelocity(playerPos: Vector, mousePos: Vector): Vector {
 class Knife extends Actor {
   preCollisonVeloX: number;
   hasCollided: boolean;
-  constructor(playerPos: Vector, mousePos: Vector) {
+  leftKnife: boolean;
+  constructor(playerPos: Vector, mousePos: Vector, isLeft: boolean) {
     let knifeVelo = knifeVelocity(playerPos, mousePos);
     super({
       pos: new ex.Vector(playerPos.x, playerPos.y - 21),
-      width: 8,
-      height: 20,
+      width: 12,
+      height: 25,
       color: Color.White,
     });
 
-    this.vel.x = knifeVelo.x * leftKnifeSpeed;
-    this.vel.y = knifeVelo.y * leftKnifeSpeed;
+    this.leftKnife = isLeft;
+
+    if (this.leftKnife) {
+      this.vel.x = knifeVelo.x * leftKnifeSpeed;
+      this.vel.y = knifeVelo.y * leftKnifeSpeed;
+    } else {
+      this.vel.x = knifeVelo.x * rightKnifeSpeed;
+      this.vel.y = knifeVelo.y * rightKnifeSpeed;
+    }
+
     this.body.collider.type = CollisionType.Passive;
     this.preCollisonVeloX = 0;
     this.hasCollided = false;
@@ -132,23 +173,33 @@ class Knife extends Actor {
     this.on("precollision", this.onCollision);
   }
 
+  //need to adjust velocity after collision, both should move at the maximum speed of the two.
   onCollision(evt: PreCollisionEvent) {
     if (evt.other instanceof Knife) {
       console.log(this.vel);
       if (this.hasCollided == false) {
+        let maximum: number = Math.max(this.vel.x, evt.other.vel.x);
         this.hasCollided = true;
         this.preCollisonVeloX = this.vel.x * -1;
       }
       console.log("knife collide");
       console.log(this.vel);
     }
+
+    if (evt.other instanceof Box) {
+      this.kill();
+    }
   }
 
   public update(engine, delta) {
+    if (this.isOffScreen) {
+      this.kill();
+      return;
+    }
     if (
       this.pos.x < 20 ||
       this.pos.y < 20 ||
-      this.pos.y > 380 ||
+      this.pos.y > 360 ||
       this.pos.x > 780
     ) {
       this.body.collider.type = CollisionType.Passive;
@@ -175,10 +226,11 @@ game.add(paddle);
 
 game.input.pointers.primary.on("down", function (evt) {
   if (evt.button == "Left") {
-    let knife = new Knife(paddle.pos, evt.pos);
+    let knife = new Knife(paddle.pos, evt.pos, true);
     game.add(knife);
   } else {
-    console.log("R");
+    let knife = new Knife(paddle.pos, evt.pos, false);
+    game.add(knife);
   }
 });
 
