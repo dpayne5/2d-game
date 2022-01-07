@@ -1,6 +1,6 @@
 # Untitled Game
 
-This is currently a super early stage 2d puzzle game, where the goal is to strike a set of boxes within a certain time limit using throwing objects to advance to the next level. It's on hold for while I redo the design process since I'm running into too many issues hacking as I go.
+This is currently a super early stage 2d puzzle game, where the goal is to strike a set of boxes within a certain time limit using throwing objects to advance to the next level. It's on hold since I got sidetracked by needing to leetcode for interviews.
 
 ## How to run
 
